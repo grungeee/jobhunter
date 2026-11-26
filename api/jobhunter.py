@@ -28,7 +28,7 @@ SESSION_COOKIE = "jobhunter_session"
 SESSION_TTL_SECONDS = 8 * 60 * 60
 VISIT_ALERT_COOLDOWN_SECONDS = 10 * 60
 _VISIT_LOCK = threading.Lock()
-_LAST_VISIT_ALERT = 0.0
+_LAST_VISIT_ALERT: float | None = None
 
 PROFILES: dict[str, dict[str, Any]] = {
     "operations-demo": {
@@ -327,7 +327,7 @@ async def visit():
     global _LAST_VISIT_ALERT
     now = time.monotonic()
     with _VISIT_LOCK:
-        if now - _LAST_VISIT_ALERT < VISIT_ALERT_COOLDOWN_SECONDS:
+        if _LAST_VISIT_ALERT is not None and now - _LAST_VISIT_ALERT < VISIT_ALERT_COOLDOWN_SECONDS:
             return {"ok": True, "notification": "cooldown"}
         _LAST_VISIT_ALERT = now
     sent = await _send_visit_alert()

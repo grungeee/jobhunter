@@ -91,10 +91,11 @@ class DemoAPIAuthTests(unittest.TestCase):
         self.assertEqual(3, len(response.json()["results"][0]["jobs"]))
 
     def test_visit_notification_is_minimal_and_cooled_down(self):
-        jobhunter._LAST_VISIT_ALERT = 0.0
-        with patch.object(jobhunter, "_send_visit_alert", new=AsyncMock(return_value=True)) as send:
-            first = self.client.post("/api/v1/jobhunter/visit")
-            second = self.client.post("/api/v1/jobhunter/visit")
+        jobhunter._LAST_VISIT_ALERT = None
+        with patch.object(jobhunter.time, "monotonic", return_value=1.0):
+            with patch.object(jobhunter, "_send_visit_alert", new=AsyncMock(return_value=True)) as send:
+                first = self.client.post("/api/v1/jobhunter/visit")
+                second = self.client.post("/api/v1/jobhunter/visit")
         self.assertEqual("sent", first.json()["notification"])
         self.assertEqual("cooldown", second.json()["notification"])
         send.assert_awaited_once()
