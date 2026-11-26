@@ -69,18 +69,40 @@ def patch_api_app(path: Path) -> None:
 
 def patch_nginx(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
-    visits_zone_name = "jobhunter_visits"
-    visits_zone = f"limit_req_zone $binary_remote_addr zone={visits_zone_name}:10m rate=6r/m;"
-    if visits_zone not in text:
-        newline = chr(10)
-        zones = [line.strip() for line in text.splitlines()
-                 if line.strip().startswith("limit_req_zone $binary_remote_addr zone=")]
-        if len(zones) != 1:
-            fail("could not find a unique client-IP rate-limit zone in nginx config")
-        text = text.replace(zones[0], zones[0] + newline + visits_zone, 1)
-
     old_auth = "location ~ ^/api/v1/(register|login|account/) {"
     new_auth = "location ~ ^/api/v1/(register|login|account/.*|jobhunter/login)$ {"
+    auth_marker = old_auth if old_auth in text else new_auth
+    if text.count(auth_marker) != 1:
+        fail("could not find a unique API auth rate-limit location")
+    block_start = text.index(auth_marker) + len(auth_marker)
+    block_end = text.find("}", block_start)
+    if block_end < 0:
+        fail("could not read the API auth rate-limit location")
+    auth_zones = re.findall(r"limit_req\s+zone=([A-Za-z0-9_-]+)", text[block_start:block_end])
+    if len(auth_zones) != 1:
+        fail("could not identify the rate-limit zone used for API authentication")
+    auth_zone_name = auth_zones[0]
+
+    visits_zone_name = "jobhunter_visits"
+    visits_zone = f"limit_req_zone $binary_remote_addr zone={visits_zone_name}:10m rate=6r/m;"
+    visit_zone_lines = [
+        line.strip() for line in text.splitlines()
+        if line.strip().startswith("limit_req_zone $binary_remote_addr zone=")
+        and line.strip().split("zone=", 1)[1].split(":", 1)[0] == visits_zone_name
+    ]
+    if visit_zone_lines and visit_zone_lines != [visits_zone]:
+        fail("an existing Jobhunter visit rate-limit zone has a different definition")
+    if not visit_zone_lines:
+        newline = chr(10)
+        auth_zone_lines = [
+            line.strip() for line in text.splitlines()
+            if line.strip().startswith("limit_req_zone $binary_remote_addr zone=")
+            and line.strip().split("zone=", 1)[1].split(":", 1)[0] == auth_zone_name
+        ]
+        if len(auth_zone_lines) != 1:
+            fail("could not find the unique rate-limit zone used for API authentication")
+        text = text.replace(auth_zone_lines[0], auth_zone_lines[0] + newline + visits_zone, 1)
+
     if old_auth in text:
         if text.count(old_auth) != 1:
             fail("auth rate-limit location is ambiguous")

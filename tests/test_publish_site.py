@@ -27,8 +27,10 @@ class PublishSiteTests(unittest.TestCase):
             )
             nginx = site / "deploy" / "nginx-example-api.conf"
             nginx.write_text(
+                "limit_req_zone $binary_remote_addr zone=example_auth:10m rate=20r/m;\n"
                 "limit_req_zone $binary_remote_addr zone=example_api:10m rate=240r/m;\n"
                 "location ~ ^/api/v1/(register|login|account/) {\n"
+                "    limit_req zone=example_auth burst=10 nodelay;\n"
                 "    proxy_pass http://example_api;\n"
                 "}\n"
                 "location / { proxy_pass http://example_api; }\n",
@@ -49,6 +51,7 @@ class PublishSiteTests(unittest.TestCase):
             self.assertEqual(1, patched_app.count("from api.jobhunter import router as jobhunter_router"))
             self.assertEqual(1, patched_app.count("app.include_router(jobhunter_router)"))
             self.assertEqual(1, patched_nginx.count("limit_req_zone $binary_remote_addr zone=jobhunter_visits"))
+            self.assertEqual(1, patched_nginx.count("limit_req zone=jobhunter_visits"))
             self.assertEqual(1, patched_nginx.count("location = /api/v1/jobhunter/visit"))
             self.assertEqual(1, patched_nginx.count("jobhunter/login"))
             config = (site / "jobhunter" / "config.js").read_text(encoding="utf-8")
