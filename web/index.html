@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="description" content="A password-protected Jobhunter demo with fictional multi-portal listings and browser-local tracking.">
+  <title>Jobhunter Demo</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Jobhunter home"><span class="brand-mark">J</span><span>Jobhunter</span></a>
+    <div class="header-actions"><span class="header-tag">Private demo</span><button id="logout-button" class="button quiet" type="button" hidden>Lock demo</button></div>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <p class="eyebrow">Profile-driven job search</p>
+      <h1>Find the next right role.</h1>
+      <p class="lede">Select a sample profile and job portals, compare the newest matching listings, then try the application tracker and review flow.</p>
+      <div class="notice" role="note"><strong>Demo data only.</strong> Every listing and profile is fictional. Live portal scraping is disabled; this demo never contacts job portals.</div>
+    </section>
+
+    <section id="login-view" class="panel login-panel" aria-labelledby="login-title">
+      <div class="panel-copy">
+        <p class="eyebrow">Access required</p>
+        <h2 id="login-title">Unlock the demo</h2>
+        <p>The access code is checked by the server. It is not stored in this page or sent to analytics.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label for="passcode">Access code</label>
+        <div class="input-row">
+          <input id="passcode" name="passcode" type="password" inputmode="numeric" autocomplete="current-password" required maxlength="256">
+          <button class="button primary" type="submit">Unlock</button>
+        </div>
+        <p id="login-status" class="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="app-view" hidden>
+      <nav class="tabs" role="tablist" aria-label="Jobhunter sections">
+        <button class="tab is-active" type="button" role="tab" aria-selected="true" data-view="listings">Listings</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-view="overview">Overview</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-view="review">Review</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-view="profile">Profile</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-view="tracker">Tracker</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-view="system">Help</button>
+      </nav>
+
+      <section id="view-listings" class="app-view" role="tabpanel" aria-label="Listings">
+        <div class="controls-grid">
+          <section class="panel" aria-labelledby="profile-label">
+            <div class="section-heading"><div><p class="eyebrow">01 / Profile</p><h2 id="profile-label">Choose a sample profile</h2></div></div>
+            <label class="field-label" for="profile-select">Matching criteria</label>
+            <select id="profile-select" class="select-control"></select>
+            <p id="profile-summary" class="help-text"></p>
+          </section>
+          <section class="panel" aria-labelledby="portal-label">
+            <div class="section-heading"><div><p class="eyebrow">02 / Sources</p><h2 id="portal-label">Select portals</h2></div><span class="count-pill">3 latest each</span></div>
+            <div id="portal-list" class="portal-list"></div>
+            <p class="help-text">AMS is selected by default. Results are fictional fixtures, not live vacancies.</p>
+          </section>
+        </div>
+
+        <div class="action-row">
+          <button id="scan-button" class="button primary" type="button">Show matching demo listings</button>
+          <button id="export-button" class="button secondary" type="button">Export local tracker</button>
+          <span id="scan-status" class="status" aria-live="polite"></span>
+        </div>
+        <section class="filter-row" aria-label="Listing filters">
+          <label class="search-label" for="search-input">Search sample listings<input id="search-input" type="search" autocomplete="off" placeholder="Title, company, location"></label>
+          <label class="field-label filter-label" for="status-filter">Tracker status<select id="status-filter" class="select-control"><option value="all">All statuses</option></select></label>
+          <label class="field-label filter-label" for="sort-select">Order<select id="sort-select" class="select-control"><option value="newest">Newest first</option><option value="match">Best match</option></select></label>
+        </section>
+        <section id="results" class="results" aria-live="polite" aria-label="Sample job listings"></section>
+      </section>
+
+      <section id="view-overview" class="app-view" role="tabpanel" aria-label="Overview" hidden>
+        <div class="section-heading view-heading"><div><p class="eyebrow">Workspace</p><h2>Overview</h2></div><button class="button secondary" data-go-view="listings" type="button">Open listings</button></div>
+        <div id="overview-stats" class="stats-grid"></div>
+        <section class="panel overview-panel"><h3>Latest demo scan</h3><p id="last-scan-summary" class="help-text">No scan has been run in this browser yet.</p><p class="notice compact-notice">This dashboard summarizes local sample data only. No real applications are submitted.</p></section>
+      </section>
+
+      <section id="view-review" class="app-view" role="tabpanel" aria-label="Application review" hidden>
+        <div class="view-heading"><p class="eyebrow">Application packet</p><h2>Draft and review</h2><p class="help-text">Generate a fictional template, edit it, save versions and export it. No AI service or real profile is used.</p></div>
+        <div id="packet-list" class="packet-list"></div>
+        <section id="packet-editor" class="panel packet-editor"><p class="empty-state">Generate a demo draft from a listing to begin.</p></section>
+      </section>
+
+      <section id="view-profile" class="app-view" role="tabpanel" aria-label="Sample profile" hidden>
+        <div class="view-heading"><p class="eyebrow">Profile</p><h2 id="profile-view-title">Sample criteria</h2><p id="profile-view-summary" class="help-text"></p></div>
+        <section class="panel"><h3>Matching keywords</h3><div id="profile-keywords" class="keyword-list large-keywords"></div><p class="help-text">These criteria are invented for the demo. They are not copied from a personal CV.</p></section>
+      </section>
+
+      <section id="view-tracker" class="app-view" role="tabpanel" aria-label="Application tracker" hidden>
+        <div class="view-heading"><p class="eyebrow">Applications</p><h2>Tracker</h2><p class="help-text">Stages, bookmarks and notes are saved only in this browser. Use the stage selector on any listing to move it through the workflow.</p></div>
+        <div id="tracker-groups" class="tracker-groups"></div>
+      </section>
+
+      <section id="view-system" class="app-view" role="tabpanel" aria-label="Help and system" hidden>
+        <div class="view-heading"><p class="eyebrow">Help & system</p><h2>How this demo works</h2></div>
+        <div class="controls-grid">
+          <section class="panel"><h3>Workflow</h3><ul class="help-list"><li>Choose a synthetic profile and one or more portals.</li><li>The local fixture parser ranks matches and returns the three newest for each selected portal.</li><li>Update a stage, save a bookmark or note, then create a fictional application draft.</li><li>Review and version drafts, or export your browser-local tracker.</li></ul></section>
+          <section class="panel"><h3>Live source status</h3><div id="portal-warnings" class="warning-list"></div><p class="help-text">Use official portal pages directly. Live collection requires an authorized API or written permission.</p></section>
+        </div>
+        <div class="action-row"><button id="refresh-button" class="button primary" type="button">Refresh selected demo sources</button><button id="system-export-button" class="button secondary" type="button">Export local tracker</button><span id="system-status" class="status" aria-live="polite"></span></div>
+        <details class="panel keyboard-help"><summary>Keyboard and navigation</summary><p>Use the section tabs to move between Listings, Overview, Review, Profile, Tracker and Help. Press <kbd>/</kbd> from anywhere in the app to focus listing search, and <kbd>?</kbd> to open Help.</p></details>
+      </section>
+
+      <section class="panel privacy-panel">
+        <p class="eyebrow">Privacy & demo limits</p>
+        <div class="privacy-grid">
+          <p><strong>Portal access:</strong> Disabled because the reviewed portal rules do not permit this demo to automate collection. The parser runs on fictional HTML fixtures.</p>
+          <p><strong>Your tracker:</strong> Stages, bookmarks, packet drafts and notes stay in this browser's local storage. They are not sent to the API. Do not use shared devices for personal notes.</p>
+          <p><strong>Visit alert:</strong> The server sends a minimal Telegram alert when the page is opened, at most once per 10-minute window. The alert contains no visitor name, IP address or page content. Website and API infrastructure may process ordinary request metadata in their logs.</p>
+        </div>
+      </section>
+    </section>
+
+    <footer class="site-footer"><span>Jobhunter Demo</span><span>Fictional sample content · no live job collection</span></footer>
+  </main>
+  <noscript><p class="noscript">JavaScript is required to use this demo.</p></noscript>
+</body>
+</html>

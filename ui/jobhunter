@@ -1,0 +1,65 @@
+#!/bin/sh
+# Portable entry point for the Jobhunter TUI and browser projection.
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+WORKSPACE=${JOBHUNTER_WORKSPACE:-$ROOT}
+FEED=${JOBHUNTER_FEED:-$WORKSPACE/.ai/feed/jobs.json}
+PYTHON=${PYTHON:-python3}
+action=${1:-menu}
+if [ "$#" -gt 0 ]; then shift; fi
+
+usage() {
+  cat <<'TXT'
+jobhunter [action] [args]
+
+  jobhunter              open the terminal menu
+  jobhunter dump         print the terminal view
+  jobhunter validate     validate ui/interface.json
+  jobhunter refresh      rebuild the local feed, then open the menu
+  jobhunter web          build the browser projection
+  jobhunter live         serve the local live dashboard
+  jobhunter text         explain that remote extraction is disabled here
+  jobhunter cv           browse local CV versions (if configured)
+  jobhunter versions     browse local letter versions
+  jobhunter revise       review a local application packet
+  jobhunter help         show this text
+
+Set JOBHUNTER_WORKSPACE and JOBHUNTER_FEED to choose local data paths.
+TXT
+}
+
+case "$action" in
+  help|-h|--help) usage ;;
+  menu|tui) exec "$PYTHON" -B "$ROOT/tools/ui.py" browse --feed "$FEED" "$@" ;;
+  dump) exec "$PYTHON" -B "$ROOT/tools/ui.py" tui --feed "$FEED" "$@" ;;
+  validate) exec "$PYTHON" -B "$ROOT/tools/ui.py" validate "$@" ;;
+  refresh)
+    "$PYTHON" -B "$ROOT/tools/feed.py" --write
+    exec "$PYTHON" -B "$ROOT/tools/ui.py" browse --feed "$FEED" "$@"
+    ;;
+  web)
+    "$PYTHON" -B "$ROOT/tools/ui.py" build --feed "$FEED" "$@"
+    file="$ROOT/ui/out/index.html"
+    if command -v xdg-open >/dev/null 2>&1; then exec xdg-open "$file"; fi
+    if command -v open >/dev/null 2>&1; then exec open "$file"; fi
+    printf 'file://%s\n' "$file"
+    ;;
+  live) exec "$PYTHON" -B "$ROOT/tools/dashboard.py" serve --host 127.0.0.1 "$@" ;;
+  text)
+    printf '%s\n' 'Live portal extraction is disabled in this public build. Use the local fixture demo or an explicitly authorized official API.' >&2
+    exit 2
+    ;;
+  cv) exec "$PYTHON" -B "$ROOT/tools/cv_history.py" "$@" ;;
+  versions) exec "$PYTHON" -B "$ROOT/tools/letter_history.py" "$@" ;;
+  revise) exec "$PYTHON" -B "$ROOT/tools/review_tui.py" "$@" ;;
+  jobhunter-remote|jobui-remote)
+    verb=${1:-}; [ "$#" -gt 0 ] && shift
+    tracker=${JOBHUNTER_TRACKER_SCRIPT:-$ROOT/ams/ams_nudge.py}
+    case "$verb" in
+      state) exec "$PYTHON" -B -c 'import json,os; p=os.path.join(os.environ.get("JOBHUNTER_TRACKER_DIR",os.path.join(os.environ.get("JOBHUNTER_WORKSPACE",os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),".ai","tracker")),"applications.json"); print(open(p,encoding="utf-8").read() if os.path.exists(p) else "{\\"jobs\\":{}}")' ;;
+      packet) exec "$PYTHON" -B "$ROOT/tools/dashboard.py" packet "$@" --json ;;
+      *) exec "$PYTHON" -B "$tracker" "$verb" "$@" ;;
+    esac
+    ;;
+  *) echo "jobhunter: unknown action '$action'" >&2; usage >&2; exit 2 ;;
+esac

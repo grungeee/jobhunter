@@ -1,0 +1,3434 @@
+{
+ "schema": "hermes-ui-structure/1",
+ "version": "1.0.0",
+ "updated": "2026-11-11",
+ "channels": {
+  "chat-frame": "inside the Hermes desktop chat frame: hermes.send",
+  "served": "served over loopback: POST to the dashboard server",
+  "static": "opened from disk: a copyable CLI command is the only writer",
+  "browser": "leaf surface action: open a URL in the browser",
+  "browser-local": "bookmark stored only in this browser, never in the tracker",
+  "local": "run on this machine: executes the single-writer CLI and reloads the feed"
+ },
+ "app": {
+  "id": "job-search-os",
+  "title": "Job Search OS",
+  "subtitle": "Listings, status and the next action",
+  "language": "en",
+  "route_root": "workspace",
+  "source_of_truth": "ui/interface.json",
+  "renderers": {
+   "tui": "python3 -B tools/ui.py tui",
+   "gui": "python3 -B tools/ui.py gui"
+  },
+  "notes": [
+   "This file describes structure, semantics and actions only.",
+   "Renderers own layout, typography and terminal glyphs.",
+   "Node ids are global and stable: link to them, never to positions."
+  ]
+ },
+ "surfaces": {
+  "tui": {
+   "id": "tui",
+   "label": "Terminal",
+   "density": "compact",
+   "max_depth": 5,
+   "width": 78,
+   "row_budget": 26,
+   "capabilities": {
+    "keyboard": true,
+    "pointer": false,
+    "hover": false,
+    "color": true,
+    "unicode": true,
+    "url_links": true,
+    "responsive": false,
+    "fixed_width": true,
+    "writes": true
+   },
+   "keys": {
+    "back": "q",
+    "help": "?",
+    "focus_next": "j",
+    "focus_prev": "k",
+    "search": "/",
+    "refresh": "r"
+   }
+  },
+  "gui": {
+   "id": "gui",
+   "label": "Browser",
+   "density": "comfortable",
+   "max_depth": 6,
+   "breakpoints": {
+    "phone": 360,
+    "tablet": 768,
+    "desktop": 1200
+   },
+   "capabilities": {
+    "keyboard": true,
+    "pointer": true,
+    "hover": true,
+    "color": true,
+    "unicode": true,
+    "url_links": true,
+    "responsive": true,
+    "fixed_width": false,
+    "writes": true
+   },
+   "keys": {
+    "help": "?",
+    "search": "/",
+    "primary": "Enter"
+   }
+  }
+ },
+ "roles": {
+  "primary": {
+   "tui": {
+    "marker": "*",
+    "style": "bold"
+   },
+   "gui": {
+    "class": "is-primary"
+   }
+  },
+  "secondary": {
+   "tui": {
+    "marker": "-",
+    "style": "plain"
+   },
+   "gui": {
+    "class": "is-secondary"
+   }
+  },
+  "neutral": {
+   "tui": {
+    "marker": " ",
+    "style": "plain"
+   },
+   "gui": {
+    "class": "is-neutral"
+   }
+  },
+  "info": {
+   "tui": {
+    "marker": "~",
+    "style": "plain"
+   },
+   "gui": {
+    "class": "is-info"
+   }
+  },
+  "success": {
+   "tui": {
+    "marker": "+",
+    "style": "plain"
+   },
+   "gui": {
+    "class": "is-success"
+   }
+  },
+  "warning": {
+   "tui": {
+    "marker": "!",
+    "style": "bold"
+   },
+   "gui": {
+    "class": "is-warning"
+   }
+  },
+  "danger": {
+   "tui": {
+    "marker": "x",
+    "style": "bold"
+   },
+   "gui": {
+    "class": "is-danger"
+   }
+  },
+  "muted": {
+   "tui": {
+    "marker": ".",
+    "style": "dim"
+   },
+   "gui": {
+    "class": "is-muted"
+   }
+  }
+ },
+ "facts": {
+  "counts.total": {
+   "type": "int",
+   "meaning": "listings known from every stored scan"
+  },
+  "counts.new": {
+   "type": "int",
+   "meaning": "listed, nothing sent"
+  },
+  "counts.nudged": {
+   "type": "int",
+   "meaning": "internal reminder raised, no application sent"
+  },
+  "counts.applied": {
+   "type": "int",
+   "meaning": "application submitted, evidence required"
+  },
+  "counts.interview": {
+   "type": "int",
+   "meaning": "conversation scheduled or done"
+  },
+  "counts.blocked": {
+   "type": "int",
+   "meaning": "cannot proceed"
+  },
+  "counts.skipped": {
+   "type": "int",
+   "meaning": "deliberately not pursued"
+  },
+  "counts.expired": {
+   "type": "int",
+   "meaning": "deadline passed before applying"
+  },
+  "counts.in_latest_scan": {
+   "type": "int",
+   "meaning": "present in the newest AMS scan"
+  },
+  "scan.available": {
+   "type": "bool",
+   "meaning": "the feed carried scan metadata"
+  },
+  "scan.scraped_at": {
+   "type": "string",
+   "meaning": "timestamp of the newest scan"
+  },
+  "scan.line": {
+   "type": "string",
+   "meaning": "pre-composed scan summary line"
+  },
+  "feed.warnings.count": {
+   "type": "int",
+   "meaning": "degraded source warnings in the feed"
+  },
+  "feed.degraded": {
+   "type": "bool",
+   "meaning": "at least one source was missing or unreadable"
+  },
+  "session.mode": {
+   "type": "enum",
+   "values": [
+    "static",
+    "served",
+    "chat-frame"
+   ],
+   "meaning": "how the page is being viewed"
+  },
+  "session.state": {
+   "type": "enum",
+   "values": [
+    "ready",
+    "loading",
+    "empty",
+    "degraded",
+    "error"
+   ],
+   "meaning": "current render state"
+  },
+  "surface.id": {
+   "type": "enum",
+   "values": [
+    "tui",
+    "gui"
+   ],
+   "meaning": "which surface is rendering"
+  },
+  "selection.listing_id": {
+   "type": "string",
+   "meaning": "the listing the action group targets"
+  },
+  "query.listings": {
+   "type": "string",
+   "meaning": "current search text"
+  },
+  "filter.scan_only": {
+   "type": "bool",
+   "meaning": "show only rows present in the newest scan"
+  },
+  "filter.bookmarked_only": {
+   "type": "bool",
+   "meaning": "show only listings bookmarked in the tracker"
+  }
+ },
+ "vocabulary": {
+  "statuses": [
+   {
+    "key": "new",
+    "label": "New",
+    "role": "neutral",
+    "filter": true,
+    "markable": false,
+    "meaning": "Listed by AMS and not yet acted on. Nothing sent."
+   },
+   {
+    "key": "nudged",
+    "label": "Reminder",
+    "role": "info",
+    "filter": true,
+    "markable": true,
+    "meaning": "A reminder was raised. No application sent yet."
+   },
+   {
+    "key": "applied",
+    "label": "Applied",
+    "role": "success",
+    "filter": true,
+    "markable": true,
+    "meaning": "Application submitted by the chosen channel. Evidence required."
+   },
+   {
+    "key": "interview",
+    "label": "Interview",
+    "role": "success",
+    "filter": true,
+    "markable": true,
+    "meaning": "A conversation is scheduled or happened."
+   },
+   {
+    "key": "success",
+    "label": "Success",
+    "role": "success",
+    "filter": true,
+    "markable": true,
+    "meaning": "Offer or acceptance. The end of the pipeline in the good direction."
+   },
+   {
+    "key": "blocked",
+    "label": "Blocked",
+    "role": "danger",
+    "filter": true,
+    "markable": true,
+    "meaning": "Cannot proceed, for example a withdrawn listing or a missing document."
+   },
+   {
+    "key": "rejected",
+    "label": "Fail",
+    "role": "danger",
+    "filter": true,
+    "markable": true,
+    "meaning": "The employer said no, or the process ended without an offer."
+   },
+   {
+    "key": "unclear",
+    "label": "Unclear",
+    "role": "muted",
+    "filter": true,
+    "markable": true,
+    "meaning": "Outcome unknown: silence, a lost thread, or no evidence either way."
+   },
+   {
+    "key": "skipped",
+    "label": "Skipped",
+    "role": "muted",
+    "filter": true,
+    "markable": true,
+    "meaning": "Deliberately not pursued. Reason recorded in the note."
+   },
+   {
+    "key": "expired",
+    "label": "Expired",
+    "role": "muted",
+    "filter": true,
+    "markable": false,
+    "meaning": "Deadline passed before an application was made."
+   }
+  ],
+  "stages": [
+   {
+    "key": "unread",
+    "label": "Not read",
+    "short": "Unread",
+    "role": "muted",
+    "flow": true,
+    "strip": false,
+    "meaning": "In the scan, never opened. Opening it fills the first circle."
+   },
+   {
+    "key": "read",
+    "label": "Reading",
+    "short": "Read",
+    "role": "neutral",
+    "flow": true,
+    "meaning": "Listing read, nothing written yet."
+   },
+   {
+    "key": "generated",
+    "label": "Generating application",
+    "short": "Gen",
+    "role": "info",
+    "flow": true,
+    "meaning": "Application documents generated from the profile."
+   },
+   {
+    "key": "checked",
+    "label": "Control application",
+    "short": "Ctrl",
+    "role": "info",
+    "flow": true,
+    "meaning": "Documents proof-read and signed off before sending."
+   },
+   {
+    "key": "sent",
+    "label": "Sending out",
+    "short": "Sent",
+    "role": "primary",
+    "flow": true,
+    "meaning": "Application submitted to the employer. Evidence required."
+   },
+   {
+    "key": "confirmed",
+    "label": "Confirming",
+    "short": "Conf",
+    "role": "success",
+    "flow": true,
+    "wait_days": 7,
+    "meaning": "Receipt confirmed, usually by an email from the employer or AMS."
+   },
+   {
+    "key": "waiting",
+    "label": "Waiting",
+    "short": "Wait",
+    "role": "info",
+    "flow": true,
+    "wait_days": 7,
+    "meaning": "Waiting for an answer. After 7 days this escalates to call/contact."
+   },
+   {
+    "key": "contact",
+    "label": "Call/Contact",
+    "short": "Call",
+    "role": "warning",
+    "flow": true,
+    "meaning": "The 7 day wait ran out: call or write the employer yourself."
+   },
+   {
+    "key": "interview",
+    "label": "Interview",
+    "role": "success",
+    "flow": false,
+    "when": "contacted",
+    "meaning": "The employer answered and a conversation is scheduled or done."
+   },
+   {
+    "key": "preparation",
+    "label": "Interview preparation",
+    "short": "Prep",
+    "role": "info",
+    "flow": false,
+    "when": "contacted",
+    "meaning": "Preparing the interview: research, answers, documents to bring."
+   },
+   {
+    "key": "awaiting",
+    "label": "Waiting for outcome",
+    "short": "Await",
+    "role": "info",
+    "flow": false,
+    "when": "contacted",
+    "wait_days": 7,
+    "meaning": "Interview done, waiting for the decision."
+   },
+   {
+    "key": "success",
+    "label": "Success",
+    "role": "success",
+    "flow": false,
+    "when": "contacted",
+    "meaning": "Offer received or accepted."
+   },
+   {
+    "key": "rejected",
+    "label": "Fail",
+    "role": "danger",
+    "flow": false,
+    "when": "contacted",
+    "meaning": "Employer declined after contact."
+   },
+   {
+    "key": "blocked",
+    "label": "Blocked",
+    "role": "danger",
+    "flow": false,
+    "meaning": "Cannot proceed: withdrawn listing or missing document."
+   },
+   {
+    "key": "unclear",
+    "label": "Unclear",
+    "role": "muted",
+    "flow": false,
+    "when": "contacted",
+    "meaning": "No clear outcome; keep it visible instead of guessing."
+   },
+   {
+    "key": "skipped",
+    "label": "Skipped",
+    "role": "muted",
+    "flow": false,
+    "meaning": "Deliberately not pursued."
+   }
+  ],
+  "sort_keys": [
+   {
+    "key": "score",
+    "label": "Score",
+    "default_direction": "desc"
+   },
+   {
+    "key": "posted_date",
+    "label": "Posted",
+    "default_direction": "desc"
+   },
+   {
+    "key": "title",
+    "label": "Listing",
+    "default_direction": "asc"
+   },
+   {
+    "key": "status",
+    "label": "Status",
+    "default_direction": "asc"
+   },
+   {
+    "key": "tracked_date",
+    "label": "Last marked",
+    "default_direction": "desc"
+   }
+  ],
+  "densities": [
+   "compact",
+   "comfortable"
+  ]
+ },
+ "data": {
+  "collections": {
+   "listings": {
+    "source": ".ai/feed/jobs.json",
+    "key": "id",
+    "fields": {
+     "id": {
+      "type": "string",
+      "label": "Id"
+     },
+     "title": {
+      "type": "string",
+      "label": "Role",
+      "trusted": false
+     },
+     "company": {
+      "type": "string",
+      "label": "Company",
+      "trusted": false
+     },
+     "location": {
+      "type": "string",
+      "label": "Location",
+      "trusted": false
+     },
+     "url": {
+      "type": "url",
+      "label": "AMS source",
+      "trusted": false
+     },
+     "posted_date": {
+      "type": "date",
+      "label": "Posted"
+     },
+     "score": {
+      "type": "float",
+      "label": "Score"
+     },
+     "pay_monthly_min": {
+      "type": "float",
+      "label": "Monthly pay (ad, monthly basis)",
+      "note": "Extracted from the search card, the AMS general info, or the ad body, and only when that text states a monthly basis; absent is unknown, not zero."
+     },
+     "pay_yearly_min": {
+      "type": "float",
+      "label": "Yearly pay (ad, yearly basis)",
+      "note": "Extracted only when the ad states a yearly basis and no monthly one. Shown in place of a missing monthly figure; never converted to a monthly rate."
+     },
+     "pay_basis": {
+      "type": "string",
+      "label": "Pay basis stated in the ad",
+      "note": "month, year, or empty when the ad states no comparable pay."
+     },
+     "score_source": {
+      "type": "string",
+      "label": "Score from"
+     },
+     "in_latest_scan": {
+      "type": "bool",
+      "label": "In latest scan"
+     },
+     "status": {
+      "type": "string",
+      "label": "Status",
+      "vocabulary": "statuses"
+     },
+     "tracked_date": {
+      "type": "date",
+      "label": "Last marked"
+     },
+     "note": {
+      "type": "string",
+      "label": "Note",
+      "trusted": false
+     },
+     "posted_basis": {
+      "type": "enum",
+      "values": [
+       "posting",
+       "extraction"
+      ],
+      "label": "Date basis"
+     },
+     "posted_age_days": {
+      "type": "int",
+      "label": "Age (days)"
+     },
+     "employment_type": {
+      "type": "string",
+      "label": "Type",
+      "trusted": false
+     },
+     "occupation_group": {
+      "type": "string",
+      "label": "Group",
+      "trusted": false
+     },
+     "roles": {
+      "type": "array",
+      "label": "Matched roles",
+      "trusted": false,
+      "note": "Scoring signal from scored_jobs.json, present only for listings the scorer matched."
+     },
+     "skills": {
+      "type": "array",
+      "label": "Matched skills",
+      "trusted": false
+     },
+     "snippet": {
+      "type": "text",
+      "label": "AMS search card (cut by AMS)",
+      "trusted": false
+     },
+     "full_text": {
+      "type": "text",
+      "label": "Full listing text",
+      "trusted": false,
+      "note": "Only an actual captured listing detail, never a search-card preview."
+     },
+     "company_description": {
+      "type": "text",
+      "label": "Unternehmensbeschreibung",
+      "trusted": false,
+      "note": "companyIntroduction from the matching AMS detail response."
+     },
+     "occupation": {
+      "type": "string",
+      "label": "Beruf",
+      "trusted": false,
+      "note": "The title in the AMS detail response, not the occupational group or search-card title."
+     },
+     "job_description": {
+      "type": "text",
+      "label": "Stellenbeschreibung",
+      "trusted": false,
+      "note": "Complete summary from the matching AMS detail response, not a short card snippet."
+     },
+     "general_info": {
+      "type": "text",
+      "label": "Allgemeine Informationen",
+      "trusted": false,
+      "note": "generalEqualitiyInfo from AMS if supplied by the publisher."
+     },
+     "stage": {
+      "type": "string",
+      "label": "Process stage",
+      "vocabulary": "stages"
+     },
+     "stage_label": {
+      "type": "string",
+      "label": "Stage label"
+     },
+     "stage_short": {
+      "type": "string",
+      "label": "Stage (short)"
+     },
+     "stage_at": {
+      "type": "date",
+      "label": "In stage since"
+     },
+     "stage_due": {
+      "type": "date",
+      "label": "Call/contact due"
+     }
+    }
+   }
+  },
+  "notes": [
+   "Every field that comes from a listing is untrusted text and must be escaped by the renderer.",
+   "A listing absent from the latest scan is historical, never implied to be open."
+  ]
+ },
+ "actions": {
+  "stage_generated": {
+   "label": "Mark generating",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "generated"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} generated"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage generated"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} generated"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing generated",
+    "success": "generated recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Gen",
+     "keys": {
+      "tui": "m"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_checked": {
+   "label": "Mark control",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "checked"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} checked"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage checked"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} checked"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing checked",
+    "success": "control recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Ctrl",
+     "keys": {
+      "tui": "e"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_sent": {
+   "label": "Mark sent out",
+   "role": "primary",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "sent"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} sent"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage sent"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} sent"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing sent",
+    "success": "sent out recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Sent",
+     "keys": {
+      "tui": "a"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_confirmed": {
+   "label": "Mark confirmed",
+   "role": "success",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "confirmed"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} confirmed"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage confirmed"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} confirmed"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing confirmed",
+    "success": "confirmed recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Cnf",
+     "keys": {
+      "tui": "c"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_waiting": {
+   "label": "Mark waiting",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "waiting"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} waiting"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage waiting"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} waiting"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing waiting",
+    "success": "waiting recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Wait",
+     "keys": {
+      "tui": "u"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_next": {
+   "label": "Advance one stage",
+   "role": "primary",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "next"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} {stage}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage {stage}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} {stage}"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing next",
+    "success": "Advance one stage recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Next",
+     "keys": {
+      "tui": "n"
+     }
+    }
+   },
+   "notes": [
+    "Resolves the next pipeline step for the focused row; at the last step it asks for the outcome.",
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero."
+   ]
+  },
+  "stage_interview": {
+   "label": "Mark interview",
+   "role": "success",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "interview"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} interview"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage interview"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} interview"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing interview",
+    "success": "interview recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Interview",
+     "keys": {
+      "tui": "i"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_success": {
+   "label": "Mark success",
+   "role": "success",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "success"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} success"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage success"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} success"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing success",
+    "success": "success recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Won",
+     "keys": {
+      "tui": "W"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_rejected": {
+   "label": "Mark fail",
+   "role": "danger",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "rejected"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} rejected"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage rejected"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} rejected"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing rejected",
+    "success": "rejected recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Fail",
+     "keys": {
+      "tui": "d"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_blocked": {
+   "label": "Mark blocked",
+   "role": "danger",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "blocked"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} blocked"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage blocked"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} blocked"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing blocked",
+    "success": "blocked recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Block",
+     "keys": {
+      "tui": "b"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_unclear": {
+   "label": "Mark unclear",
+   "role": "muted",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "unclear"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} unclear"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage unclear"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} unclear"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing unclear",
+    "success": "unclear recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Unclear",
+     "keys": {
+      "tui": "U"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_skipped": {
+   "label": "Mark skipped",
+   "role": "muted",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "skipped"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} skipped"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage skipped"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} skipped"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing skipped",
+    "success": "skipped recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Skip",
+     "keys": {
+      "tui": "K"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "toggle_bookmark": {
+   "label": "Bookmark",
+   "role": "secondary",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py bookmark {listing_id}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "bookmark {listing_id}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/bookmark",
+     "body": {
+      "id": "{listing_id}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py bookmark {listing_id}"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing the bookmark",
+    "success": "bookmark toggled",
+    "failure": "Tracker rejected the bookmark"
+   },
+   "surface": {
+    "tui": {
+     "label": "Bookmark",
+     "keys": {
+      "tui": "B"
+     }
+    }
+   },
+   "notes": [
+    "A bookmark lives in the application tracker, so it survives a restart and appears as Bookmark in the main and expanded listings.",
+    "Bookmarking is a tracker write and lands through ams_nudge.py, by way of tools/dashboard.py bookmark."
+   ]
+  },
+  "open_source": {
+   "label": "Open AMS listing",
+   "role": "secondary",
+   "scope": "selection",
+   "requires": [
+    "url_links"
+   ],
+   "args": [
+    {
+     "name": "listing_url",
+     "from": "selection.listing_url"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "browser",
+     "kind": "url",
+     "template": "{listing_url}"
+    }
+   ],
+   "feedback": {
+    "pending": "",
+    "success": "",
+    "failure": "No source link on this listing"
+   }
+  },
+  "refresh_feed": {
+   "label": "Refresh from feed",
+   "role": "secondary",
+   "scope": "global",
+   "args": [],
+   "transports": [
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "rebuild the job listings dashboard"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/refresh",
+     "body": {}
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py build"
+    }
+   ],
+   "feedback": {
+    "pending": "Rebuilding",
+    "success": "Feed reloaded",
+    "failure": "Feed could not be read"
+   }
+  },
+  "build_static": {
+   "label": "Write static page",
+   "role": "secondary",
+   "scope": "global",
+   "args": [],
+   "transports": [
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "rebuild the job listings dashboard"
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py build"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing",
+    "success": "DASHBOARD.html written",
+    "failure": "Build failed"
+   }
+  },
+  "stage_read": {
+   "label": "Mark read",
+   "role": "neutral",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "read"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} read"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage read"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} read"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing read",
+    "success": "read recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Read"
+    }
+   },
+   "notes": [
+    "Fires on its own when a listing is opened for the first time.",
+    "Stage 0 is unread: every circle empty. Read fills the first one.",
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark."
+   ]
+  },
+  "stage_contact": {
+   "label": "Mark call/contact",
+   "role": "warning",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "contact"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} contact"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage contact"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} contact"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing call/contact",
+    "success": "call/contact recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Call",
+     "keys": {
+      "tui": "C"
+     }
+    }
+   },
+   "notes": [
+    "The seven day wait ran out: you called or wrote the employer yourself.",
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark."
+   ]
+  },
+  "stage_prev": {
+   "label": "Step back one stage",
+   "role": "neutral",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "prev"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} {stage}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage {stage}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} {stage}"
+    }
+   ],
+   "feedback": {
+    "pending": "Stepping back",
+    "success": "step back recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Back",
+     "keys": {
+      "tui": "p"
+     }
+    }
+   },
+   "notes": [
+    "Terminal and browser convenience: resolves the previous pipeline step for the focused row.",
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero."
+   ]
+  },
+  "stage_preparation": {
+   "label": "Mark interview preparation",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "preparation"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} preparation"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage preparation"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} preparation"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing preparation",
+    "success": "preparation recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Prep",
+     "keys": {
+      "tui": "z"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "stage_awaiting": {
+   "label": "Mark waiting for outcome",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    },
+    {
+     "name": "stage",
+     "const": "awaiting"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} awaiting"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "move {listing_id} to stage awaiting"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/stage",
+     "body": {
+      "id": "{listing_id}",
+      "stage": "{stage}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py mark {listing_id} awaiting"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing awaiting",
+    "success": "awaiting recorded",
+    "failure": "Tracker rejected the update"
+   },
+   "surface": {
+    "tui": {
+     "label": "Await",
+     "keys": {
+      "tui": "X"
+     }
+    }
+   },
+   "notes": [
+    "Every stage write lands through ams_nudge.py, by way of tools/dashboard.py mark.",
+    "Never show success before the writer returns zero.",
+    "The stage is the process truth; the coarse status is derived from it."
+   ]
+  },
+  "generate_application": {
+   "label": "Generate application",
+   "role": "primary",
+   "scope": "selection",
+   "confirm": "when_generated",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py generate {listing_id}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "generate the application for {listing_id}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/generate",
+     "body": {
+      "id": "{listing_id}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py generate {listing_id}"
+    }
+   ],
+   "feedback": {
+    "pending": "Writing application",
+    "success": "packet written",
+    "failure": "Generator says: "
+   }
+  },
+  "view_packet": {
+   "label": "View application packet",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py packet {listing_id}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "show the application packet for {listing_id}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "GET",
+     "path": "/api/packet",
+     "query": {
+      "id": "{listing_id}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py packet {listing_id}"
+    }
+   ],
+   "feedback": {
+    "pending": "Reading packet",
+    "success": "packet open",
+    "failure": "No packet yet"
+   }
+  },
+  "note_application": {
+   "label": "Note on this application",
+   "role": "info",
+   "scope": "selection",
+   "confirm": "none",
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py note {listing_id}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "note on {listing_id}: "
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/note",
+     "body": {
+      "id": "{listing_id}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py note {listing_id}"
+    }
+   ],
+   "feedback": {
+    "pending": "Saving note",
+    "success": "note saved",
+    "failure": "Tracker says: "
+   }
+  },
+  "undo_stage": {
+   "label": "Undo stage",
+   "role": "neutral",
+   "scope": "selection",
+   "confirm": "none",
+   "undo": true,
+   "requires": [
+    "writes"
+   ],
+   "args": [
+    {
+     "name": "listing_id",
+     "from": "selection.listing_id"
+    }
+   ],
+   "transports": [
+    {
+     "channel": "local",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py unstage {listing_id}"
+    },
+    {
+     "channel": "chat-frame",
+     "kind": "hermes.send",
+     "template": "undo the last stage change on {listing_id}"
+    },
+    {
+     "channel": "served",
+     "kind": "http",
+     "method": "POST",
+     "path": "/api/unstage",
+     "body": {
+      "id": "{listing_id}"
+     }
+    },
+    {
+     "channel": "static",
+     "kind": "cli",
+     "command": "python3 -B tools/dashboard.py unstage {listing_id}"
+    }
+   ],
+   "feedback": {
+    "pending": "Undoing the stage",
+    "success": "back at the stage it held before",
+    "failure": "Tracker says: "
+   }
+  }
+ },
+ "states": {
+  "loading": {
+   "message": "Loading listings from the AMS feed",
+   "role": "muted",
+   "busy": true,
+   "shows": [
+    "listings"
+   ],
+   "hides": [
+    "listings.table"
+   ]
+  },
+  "empty": {
+   "message": "No listings match the current filters. Clear the search or pick another status.",
+   "role": "muted",
+   "shows": [
+    "listings.controls"
+   ],
+   "hides": [
+    "listings.table"
+   ]
+  },
+  "degraded": {
+   "message": "One AMS source could not be read. Totals may be lower than the stored feed.",
+   "role": "warning",
+   "shows": [
+    "listings",
+    "review.warnings"
+   ],
+   "hides": []
+  },
+  "error": {
+   "message": "The tracker rejected the last update. Nothing was written.",
+   "role": "danger",
+   "shows": [
+    "listings"
+   ],
+   "hides": []
+  }
+ },
+ "tree": [
+  {
+   "id": "workspace",
+   "kind": "group",
+   "label": "Workspace",
+   "meaning": "What the candidate looks at first: counts, then the listing list.",
+   "order": 10,
+   "keys": {
+    "tui": "w",
+    "gui": "Alt+W"
+   },
+   "children": [
+    {
+     "id": "workspace.overview",
+     "kind": "view",
+     "label": "Overview",
+     "meaning": "Totals and the newest scan in one glance.",
+     "order": 10,
+     "keys": {
+      "tui": "o",
+      "gui": "Alt+O"
+     },
+     "children": [
+      {
+       "id": "overview.counts",
+       "kind": "group",
+       "label": "Counts",
+       "layout": {
+        "tui": "inline",
+        "gui": "stat-grid"
+       },
+       "children": [
+        {
+         "id": "meter.total",
+         "kind": "meter",
+         "label": "Listings",
+         "bind": "counts.total",
+         "role": "neutral"
+        },
+        {
+         "id": "meter.new",
+         "kind": "meter",
+         "label": "New",
+         "bind": "counts.new",
+         "role": "neutral"
+        },
+        {
+         "id": "meter.asked",
+         "kind": "meter",
+         "label": "Reminder",
+         "bind": "counts.nudged",
+         "role": "info",
+         "meaning": "Reminder raised, nothing sent."
+        },
+        {
+         "id": "meter.applied",
+         "kind": "meter",
+         "label": "Applied",
+         "bind": "counts.applied",
+         "role": "success"
+        },
+        {
+         "id": "meter.interview",
+         "kind": "meter",
+         "label": "Interview",
+         "bind": "counts.interview",
+         "role": "success"
+        },
+        {
+         "id": "meter.latest_scan",
+         "kind": "meter",
+         "label": "In latest scan",
+         "bind": "counts.in_latest_scan",
+         "role": "neutral"
+        }
+       ]
+      },
+      {
+       "id": "overview.scan",
+       "kind": "field",
+       "label": "Latest scan",
+       "bind": "scan.line",
+       "fallback": "no scan metadata",
+       "meaning": "When the newest AMS scan ran, and over what area."
+      }
+     ]
+    },
+    {
+     "id": "listings",
+     "kind": "view",
+     "label": "Listings",
+     "meaning": "The working surface: find one role, read it, mark it.",
+     "order": 20,
+     "keys": {
+      "tui": "l",
+      "gui": "Alt+L"
+     },
+     "children": [
+      {
+       "id": "listings.controls",
+       "kind": "group",
+       "label": "Find and filter",
+       "order": 10,
+       "surface": {
+        "tui": {
+         "label": "Filter"
+        },
+        "gui": {
+         "component": "toolbar"
+        }
+       },
+       "children": [
+        {
+         "id": "listings.search",
+         "kind": "query",
+         "label": "Search listings",
+         "bind": "query.listings",
+         "placeholder": "title, company, location, skill",
+         "keys": {
+          "tui": "/",
+          "gui": "/"
+         }
+        },
+        {
+         "id": "listings.filters.status",
+         "kind": "group",
+         "label": "Status",
+         "layout": {
+          "tui": "inline",
+          "gui": "chip-row"
+         },
+         "meaning": "Every status in the taxonomy is reachable, including skipped and expired.",
+         "children": [
+          {
+           "id": "filter.new",
+           "kind": "filter",
+           "label": "New",
+           "role": "neutral",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "new"
+           },
+           "keys": {
+            "tui": "1",
+            "gui": "Alt+1"
+           }
+          },
+          {
+           "id": "filter.asked",
+           "kind": "filter",
+           "label": "Reminder",
+           "role": "info",
+           "meaning": "Internal reminder raised; no application or employer contact is implied.",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "nudged"
+           },
+           "keys": {
+            "tui": "2",
+            "gui": "Alt+2"
+           }
+          },
+          {
+           "id": "filter.applied",
+           "kind": "filter",
+           "label": "Applied",
+           "role": "success",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "applied"
+           },
+           "keys": {
+            "tui": "3",
+            "gui": "Alt+3"
+           }
+          },
+          {
+           "id": "filter.interview",
+           "kind": "filter",
+           "label": "Interview",
+           "role": "success",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "interview"
+           },
+           "keys": {
+            "tui": "4",
+            "gui": "Alt+4"
+           }
+          },
+          {
+           "id": "filter.blocked",
+           "kind": "filter",
+           "label": "Blocked",
+           "role": "danger",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "blocked"
+           },
+           "keys": {
+            "tui": "5",
+            "gui": "Alt+5"
+           }
+          },
+          {
+           "id": "filter.skipped",
+           "kind": "filter",
+           "label": "Skipped",
+           "role": "muted",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "skipped"
+           },
+           "keys": {
+            "tui": "6",
+            "gui": "Alt+6"
+           }
+          },
+          {
+           "id": "filter.expired",
+           "kind": "filter",
+           "label": "Expired",
+           "role": "muted",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "expired"
+           },
+           "keys": {
+            "tui": "7",
+            "gui": "Alt+7"
+           }
+          },
+          {
+           "id": "filter.rejected",
+           "kind": "filter",
+           "label": "Fail",
+           "role": "danger",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "rejected"
+           },
+           "keys": {
+            "tui": "8",
+            "gui": "Alt+8"
+           }
+          },
+          {
+           "id": "filter.success",
+           "kind": "filter",
+           "label": "Success",
+           "role": "success",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "success"
+           },
+           "keys": {
+            "tui": "9",
+            "gui": "Alt+9"
+           }
+          },
+          {
+           "id": "filter.unclear",
+           "kind": "filter",
+           "label": "Unclear",
+           "role": "muted",
+           "bind": {
+            "vocabulary": "statuses",
+            "key": "unclear"
+           },
+           "keys": {
+            "tui": "0",
+            "gui": "Alt+0"
+           }
+          }
+         ]
+        },
+        {
+         "id": "listings.filters.stage",
+         "kind": "group",
+         "label": "Application stage",
+         "layout": {
+          "tui": "inline",
+          "gui": "chip-row"
+         },
+         "children": [
+          {
+           "id": "filter.stage",
+           "kind": "filter",
+           "mode": "select",
+           "label": "Current stage",
+           "role": "info",
+           "bind": {
+            "vocabulary": "stages"
+           },
+           "keys": {
+            "tui": "S"
+           },
+           "meaning": "Show listings in one exact process stage, independently of status and scope."
+          }
+         ]
+        },
+        {
+         "id": "listings.filters.scope",
+         "kind": "group",
+         "label": "Scope",
+         "layout": {
+          "tui": "inline",
+          "gui": "chip-row"
+         },
+         "children": [
+          {
+           "id": "filter.bookmarked",
+           "kind": "filter",
+           "label": "Bookmarked",
+           "role": "secondary",
+           "bind": "filter.bookmarked_only",
+           "keys": {
+            "tui": "*",
+            "gui": "Alt+Shift+8"
+           },
+           "meaning": "Only the listings bookmarked in the tracker."
+          },
+          {
+           "id": "filter.latest_scan",
+           "kind": "filter",
+           "label": "In latest scan",
+           "role": "neutral",
+           "bind": "filter.scan_only",
+           "keys": {
+            "tui": "s",
+            "gui": "Alt+S"
+           },
+           "meaning": "Off shows historical listings too; they are never implied to be open."
+          }
+         ]
+        },
+        {
+         "id": "listings.sort",
+         "kind": "sort",
+         "label": "Sort",
+         "bind": {
+          "vocabulary": "sort_keys"
+         },
+         "default": "score"
+        }
+       ]
+      },
+      {
+       "id": "listings.actions",
+       "kind": "group",
+       "label": "Action on the focused listing",
+       "order": 20,
+       "meaning": "One obvious primary action; the rest stay reachable without a wall of buttons.",
+       "children": [
+        {
+         "id": "action.stage_generated",
+         "kind": "action",
+         "action": "stage_generated",
+         "label": "Mark generating",
+         "role": "info",
+         "keys": {
+          "tui": "m",
+          "gui": "Alt+G"
+         },
+         "surface": {
+          "tui": {
+           "label": "Gen"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_checked",
+         "kind": "action",
+         "action": "stage_checked",
+         "label": "Mark control",
+         "role": "info",
+         "keys": {
+          "tui": "e",
+          "gui": "Alt+E"
+         },
+         "surface": {
+          "tui": {
+           "label": "Ctrl"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_sent",
+         "kind": "action",
+         "action": "stage_sent",
+         "label": "Mark sent out",
+         "role": "primary",
+         "keys": {
+          "tui": "a",
+          "gui": "Alt+A"
+         },
+         "surface": {
+          "tui": {
+           "label": "Sent"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_confirmed",
+         "kind": "action",
+         "action": "stage_confirmed",
+         "label": "Mark confirmed",
+         "role": "success",
+         "keys": {
+          "tui": "c",
+          "gui": "Alt+C"
+         },
+         "surface": {
+          "tui": {
+           "label": "Cnf"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_waiting",
+         "kind": "action",
+         "action": "stage_waiting",
+         "label": "Mark waiting",
+         "role": "info",
+         "keys": {
+          "tui": "u",
+          "gui": "Alt+U"
+         },
+         "surface": {
+          "tui": {
+           "label": "Wait"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_contact",
+         "kind": "action",
+         "action": "stage_contact",
+         "label": "Mark call/contact",
+         "role": "warning",
+         "keys": {
+          "tui": "C",
+          "gui": "Alt+Shift+C"
+         },
+         "surface": {
+          "tui": {
+           "label": "Call"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_prev",
+         "kind": "action",
+         "action": "stage_prev",
+         "label": "Step back one stage",
+         "role": "neutral",
+         "order": 49,
+         "keys": {
+          "tui": "p",
+          "gui": "Alt+P"
+         },
+         "meaning": "Walks the process stage one step back, from call/contact towards read.",
+         "surface": {
+          "tui": {
+           "label": "Back"
+          }
+         }
+        },
+        {
+         "id": "action.stage_next",
+         "kind": "action",
+         "action": "stage_next",
+         "label": "Advance one stage",
+         "role": "primary",
+         "keys": {
+          "tui": "n",
+          "gui": "Alt+N"
+         },
+         "surface": {
+          "tui": {
+           "label": "Next"
+          }
+         }
+        },
+        {
+         "id": "action.stage_interview",
+         "kind": "action",
+         "action": "stage_interview",
+         "label": "Mark interview",
+         "role": "success",
+         "keys": {
+          "tui": "i",
+          "gui": "Alt+I"
+         },
+         "surface": {
+          "tui": {
+           "label": "Interview"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_preparation",
+         "kind": "action",
+         "action": "stage_preparation",
+         "label": "Mark interview preparation",
+         "role": "info",
+         "keys": {
+          "tui": "z",
+          "gui": "Alt+Z"
+         },
+         "surface": {
+          "tui": {
+           "label": "Prep"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_awaiting",
+         "kind": "action",
+         "action": "stage_awaiting",
+         "label": "Mark waiting for outcome",
+         "role": "info",
+         "keys": {
+          "tui": "X",
+          "gui": "Alt+Shift+X"
+         },
+         "surface": {
+          "tui": {
+           "label": "Await"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_success",
+         "kind": "action",
+         "action": "stage_success",
+         "label": "Mark success",
+         "role": "success",
+         "keys": {
+          "tui": "W",
+          "gui": "Alt+Shift+W"
+         },
+         "surface": {
+          "tui": {
+           "label": "Won"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_rejected",
+         "kind": "action",
+         "action": "stage_rejected",
+         "label": "Mark fail",
+         "role": "danger",
+         "keys": {
+          "tui": "d",
+          "gui": "Alt+D"
+         },
+         "surface": {
+          "tui": {
+           "label": "Fail"
+          },
+          "gui": {
+           "hidden": true
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.stage_blocked",
+         "kind": "action",
+         "action": "stage_blocked",
+         "label": "Mark blocked",
+         "role": "danger",
+         "keys": {
+          "tui": "b",
+          "gui": "Alt+B"
+         },
+         "surface": {
+          "tui": {
+           "label": "Block"
+          }
+         }
+        },
+        {
+         "id": "action.stage_unclear",
+         "kind": "action",
+         "action": "stage_unclear",
+         "label": "Mark unclear",
+         "role": "muted",
+         "keys": {
+          "tui": "U",
+          "gui": "Alt+Shift+U"
+         },
+         "surface": {
+          "tui": {
+           "label": "Unclear"
+          }
+         }
+        },
+        {
+         "id": "action.stage_skipped",
+         "kind": "action",
+         "action": "stage_skipped",
+         "label": "Mark skipped",
+         "role": "muted",
+         "keys": {
+          "tui": "K",
+          "gui": "Alt+K"
+         },
+         "surface": {
+          "tui": {
+           "label": "Skip"
+          }
+         }
+        },
+        {
+         "id": "action.toggle_bookmark",
+         "kind": "action",
+         "action": "toggle_bookmark",
+         "label": "Bookmark",
+         "meaning": "Saved in the tracker itself; Bookmark appears on the main row and expanded listing, and the filter finds it again.",
+         "surface": {
+          "tui": {
+           "label": "Bookmark"
+          }
+         },
+         "keys": {
+          "tui": "B",
+          "gui": "Alt+Shift+B"
+         }
+        },
+        {
+         "id": "action.open_source",
+         "kind": "action",
+         "action": "open_source",
+         "requires": [
+          "url_links"
+         ],
+         "surface": {
+          "tui": {
+           "label": "Open AMS in browser",
+           "keys": {
+            "tui": "v"
+           }
+          },
+          "gui": {
+           "label": "Open AMS listing"
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.generate_application",
+         "kind": "action",
+         "action": "generate_application",
+         "label": "Generate application",
+         "role": "primary",
+         "keys": {
+          "tui": "R",
+          "gui": "Alt+Shift+G"
+         },
+         "surface": {
+          "gui": {
+           "label": "Write"
+          }
+         }
+        },
+        {
+         "id": "action.view_packet",
+         "kind": "action",
+         "action": "view_packet",
+         "label": "View application packet",
+         "role": "info",
+         "keys": {
+          "tui": "V",
+          "gui": "Alt+Shift+V"
+         },
+         "surface": {
+          "tui": {
+           "label": "Packet"
+          },
+          "gui": {
+           "label": "Packet"
+          }
+         },
+         "band": false
+        },
+        {
+         "id": "action.note_application",
+         "kind": "action",
+         "action": "note_application",
+         "label": "Note on this application",
+         "role": "info",
+         "keys": {
+          "tui": "N",
+          "gui": "Alt+Shift+N"
+         },
+         "surface": {
+          "tui": {
+           "label": "Note"
+          },
+          "gui": {
+           "label": "Note"
+          }
+         },
+         "band": false
+        }
+       ]
+      },
+      {
+       "id": "listings.table",
+       "kind": "group",
+       "label": "Rows",
+       "order": 30,
+       "meaning": "A row template: the same field list drives the terminal detail pane and the browser table.",
+       "children": [
+        {
+         "id": "item.listing",
+         "kind": "item",
+         "label": "Listing",
+         "collection": "listings",
+         "order": 10,
+         "children": [
+          {
+           "id": "field.title",
+           "kind": "field",
+           "label": "Title",
+           "bind": "listing.title",
+           "role": "primary",
+           "order": 10
+          },
+          {
+           "id": "field.company",
+           "kind": "field",
+           "label": "Company",
+           "bind": "listing.company",
+           "order": 20
+          },
+          {
+           "id": "field.location",
+           "kind": "field",
+           "label": "Location",
+           "bind": "listing.location",
+           "order": 30
+          },
+          {
+           "id": "field.posted",
+           "kind": "field",
+           "label": "Posted",
+           "bind": "listing.posted_date",
+           "meaning": "Posting date, ISO. When no source carries one the feed falls back to when the scanner last saw the listing, and the row carries the EST flag.",
+           "order": 40
+          },
+          {
+           "id": "field.score",
+           "kind": "field",
+           "label": "Score",
+           "bind": "listing.score",
+           "order": 50,
+           "layout": {
+            "tui": "badge",
+            "gui": "badge"
+           },
+           "meaning": "Ranking score shown before the listing flags."
+          },
+          {
+           "id": "field.pay",
+           "kind": "field",
+           "label": "Pay (ad, monthly or yearly)",
+           "bind": "listing.pay_monthly_min",
+           "order": 55,
+           "meaning": "Shows the monthly amount when the ad states one, otherwise the yearly amount under the ad's own wording, otherwise not stated. Used as a secondary sort after score."
+          },
+          {
+           "id": "field.score_source",
+           "kind": "field",
+           "label": "Score from",
+           "bind": "listing.score_source",
+           "order": 60,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           }
+          },
+          {
+           "id": "field.status",
+           "kind": "status",
+           "label": "Status",
+           "bind": "listing.status",
+           "vocabulary": "statuses",
+           "order": 75
+          },
+          {
+           "id": "field.scan_flag",
+           "kind": "status",
+           "label": "Seen in latest AMS scan",
+           "bind": "listing.in_latest_scan",
+           "true_label": "Yes",
+           "false_label": "No",
+           "meaning": "Whether the listing was observed in the latest scan. This does not prove it is still open.",
+           "order": 70,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           }
+          },
+          {
+           "id": "field.tracked",
+           "kind": "field",
+           "label": "Last marked",
+           "bind": "listing.tracked_date",
+           "order": 100,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           }
+          },
+          {
+           "id": "field.employment",
+           "kind": "field",
+           "label": "Type",
+           "bind": "listing.employment_type",
+           "order": 80,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           },
+           "meaning": "Full time, part time or marginal, as AMS states it."
+          },
+          {
+           "id": "field.occupation",
+           "kind": "field",
+           "label": "Group",
+           "bind": "listing.occupation_group",
+           "order": 15,
+           "layout": {
+            "tui": "inline",
+            "gui": "inline"
+           },
+           "meaning": "AMS occupational group. Present for every listing in the current scan."
+          },
+          {
+           "id": "field.roles",
+           "kind": "field",
+           "label": "Matched roles",
+           "bind": "listing.roles",
+           "order": 90,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           },
+           "meaning": "Scorer hits against the target roles, not a listing attribute. Empty means no match was recorded, not that the ad lacks roles."
+          },
+          {
+           "id": "field.skills",
+           "kind": "field",
+           "label": "Matched skills",
+           "bind": "listing.skills",
+           "order": 95,
+           "layout": {
+            "tui": "inline",
+            "gui": "detail"
+           }
+          },
+          {
+           "id": "field.company_description",
+           "kind": "field",
+           "label": "Unternehmensbeschreibung",
+           "bind": "listing.company_description",
+           "order": 101,
+           "layout": {
+            "tui": "preview",
+            "gui": "preview"
+           },
+           "fallback": "Not captured from the AMS detail page.",
+           "meaning": "Publisher's company introduction from the matching AMS ad."
+          },
+          {
+           "id": "field.occupation_title",
+           "kind": "field",
+           "label": "Beruf",
+           "bind": "listing.occupation",
+           "order": 102,
+           "layout": {
+            "tui": "preview",
+            "gui": "preview"
+           },
+           "fallback": "Not captured from the AMS detail page.",
+           "meaning": "Role as labelled Beruf in the AMS detail, not an inferred occupational group."
+          },
+          {
+           "id": "field.job_description",
+           "kind": "field",
+           "label": "Stellenbeschreibung",
+           "bind": "listing.job_description",
+           "order": 103,
+           "layout": {
+            "tui": "preview",
+            "gui": "preview"
+           },
+           "fallback": "Not captured from the AMS detail page.",
+           "meaning": "Full AMS ad description, not the truncated search card."
+          },
+          {
+           "id": "field.general_info",
+           "kind": "field",
+           "label": "Allgemeine Informationen",
+           "bind": "listing.general_info",
+           "order": 104,
+           "layout": {
+            "tui": "preview",
+            "gui": "preview"
+           },
+           "fallback": "Not captured or not provided in the AMS detail.",
+           "meaning": "Publisher's additional information, such as the monthly minimum pay."
+          },
+          {
+           "id": "field.full_text",
+           "kind": "field",
+           "label": "Full listing text",
+           "bind": "listing.full_text",
+           "order": 110,
+           "layout": {
+            "tui": "preview",
+            "gui": "preview"
+           },
+           "fallback": "AMS detail not captured yet. The listing may no longer be online. The search card below is incomplete.",
+           "meaning": "Archived full AMS ad text. Structured sections above are shown separately when available."
+          },
+          {
+           "id": "field.stage",
+           "kind": "status",
+           "label": "Process stage",
+           "bind": "listing.stage",
+           "vocabulary": "stages",
+           "order": 50,
+           "layout": {
+            "tui": "badge",
+            "gui": "badge"
+           },
+           "meaning": "Where the application sits in the pipeline. The gauge is drawn from this."
+          }
+         ],
+         "flags": [
+          {
+           "id": "flag.hot",
+           "label": "HOT",
+           "role": "primary",
+           "when": [
+            {
+             "fact": "listing.score",
+             "op": "gte",
+             "value": 9
+            }
+           ],
+           "meaning": "Score 9.0 or better."
+          },
+          {
+           "id": "flag.fresh",
+           "label": "FRESH",
+           "role": "success",
+           "when": [
+            {
+             "fact": "listing.posted_age_days",
+             "op": "lte",
+             "value": 2
+            }
+           ],
+           "meaning": "Posted within two days of the scan."
+          },
+          {
+           "id": "flag.match",
+           "label": "MATCH",
+           "role": "info",
+           "when": [
+            {
+             "fact": "listing.roles",
+             "op": "truthy"
+            }
+           ],
+           "meaning": "The scorer matched at least one role from the taxonomy."
+          },
+          {
+           "id": "flag.stale",
+           "label": "STALE",
+           "role": "danger",
+           "when": [
+            {
+             "fact": "listing.in_latest_scan",
+             "op": "is",
+             "value": false
+            }
+           ],
+           "meaning": "Not in the latest scan. Never treat it as open."
+          },
+          {
+           "id": "flag.est",
+           "label": "EST",
+           "role": "warning",
+           "when": [
+            {
+             "fact": "listing.posted_basis",
+             "op": "is",
+             "value": "extraction"
+            }
+           ],
+           "meaning": "No posting date in any source: the date shown is when the scanner last saw it."
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "review",
+   "kind": "group",
+   "label": "Review",
+   "meaning": "Scan freshness and source problems, kept out of the way when nothing is wrong.",
+   "order": 20,
+   "keys": {
+    "tui": "r",
+    "gui": "Alt+R"
+   },
+   "children": [
+    {
+     "id": "review.latest_scan",
+     "kind": "view",
+     "label": "Latest scan",
+     "when": [
+      {
+       "fact": "scan.available",
+       "op": "is",
+       "value": true
+      }
+     ],
+     "children": [
+      {
+       "id": "scan.scraped",
+       "kind": "field",
+       "label": "Scanned",
+       "bind": "scan.scraped_at",
+       "fallback": "unknown"
+      },
+      {
+       "id": "meter.scan_rows",
+       "kind": "meter",
+       "label": "Rows in scan",
+       "bind": "counts.in_latest_scan",
+       "role": "neutral"
+      },
+      {
+       "id": "scan.history_note",
+       "kind": "message",
+       "role": "muted",
+       "text": "Listings from older scans are historical. They are kept for context and are not open vacancies."
+      }
+     ]
+    },
+    {
+     "id": "review.warnings",
+     "kind": "view",
+     "label": "Source warnings",
+     "role": "warning",
+     "when": [
+      {
+       "fact": "feed.warnings.count",
+       "op": "gt",
+       "value": 0
+      }
+     ],
+     "children": [
+      {
+       "id": "review.warnings.list",
+       "kind": "field",
+       "label": "Warnings",
+       "bind": "feed.warnings.count"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "profile",
+   "kind": "group",
+   "label": "Profile",
+   "meaning": "Local editable profile drafts; private source data is never bundled into the public page.",
+   "order": 25,
+   "children": [
+    {
+     "id": "profile.skills",
+     "kind": "view",
+     "label": "Skills",
+     "meaning": "Edit a local skills draft with a source for each claim; export for review."
+    }
+   ]
+  },
+  {
+   "id": "tracker",
+   "kind": "group",
+   "label": "Tracker",
+   "meaning": "The registers behind the counts. Only shown when it holds something.",
+   "order": 30,
+   "keys": {
+    "tui": "t",
+    "gui": "Alt+T"
+   },
+   "children": [
+    {
+     "id": "tracker.applied",
+     "kind": "view",
+     "label": "Applied",
+     "when": [
+      {
+       "fact": "counts.applied",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": "tracker.interviews",
+     "kind": "view",
+     "label": "Interviews",
+     "when": [
+      {
+       "fact": "counts.interview",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": "tracker.blocked",
+     "kind": "view",
+     "label": "Blocked",
+     "when": [
+      {
+       "fact": "counts.blocked",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": "tracker.expired",
+     "kind": "view",
+     "label": "Expired",
+     "when": [
+      {
+       "fact": "counts.expired",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "system",
+   "kind": "group",
+   "label": "System",
+   "meaning": "How the page is running and how to get out of a broken path.",
+   "order": 40,
+   "keys": {
+    "tui": "y",
+    "gui": "Alt+Y"
+   },
+   "children": [
+    {
+     "id": "system.help",
+     "kind": "view",
+     "label": "Keys and help",
+     "keys": {
+      "tui": "?",
+      "gui": "F1"
+     }
+    },
+    {
+     "id": "system.refresh",
+     "kind": "action",
+     "action": "refresh_feed",
+     "label": "Refresh from feed",
+     "keys": {
+      "tui": "f",
+      "gui": "Alt+F"
+     }
+    },
+    {
+     "id": "system.build",
+     "kind": "action",
+     "action": "build_static",
+     "label": "Write static page",
+     "when": [
+      {
+       "fact": "session.mode",
+       "op": "is",
+       "value": "served"
+      }
+     ]
+    },
+    {
+     "id": "system.cli_fallback",
+     "kind": "message",
+     "label": "Terminal fallback",
+     "role": "muted",
+     "when": [
+      {
+       "fact": "session.mode",
+       "op": "is",
+       "value": "static"
+      }
+     ],
+     "text": "Marking from a file:// page needs the served build, the chat frame, or: python3 -B tools/dashboard.py mark <id> applied"
+    }
+   ]
+  }
+ ],
+ "tabs": [
+  {
+   "id": "tab.listings",
+   "label": "Listings",
+   "root": "listings",
+   "order": 10,
+   "meaning": "The working surface: find one role, read it, mark it."
+  },
+  {
+   "id": "tab.overview",
+   "label": "Overview",
+   "root": "workspace.overview",
+   "order": 20,
+   "meaning": "Counts and the last scan at a glance."
+  },
+  {
+   "id": "tab.review",
+   "label": "Review",
+   "root": "review",
+   "order": 30,
+   "meaning": "What the last scan produced, and any source warnings."
+  },
+  {
+   "id": "tab.profile",
+   "label": "Profile",
+   "root": "profile",
+   "order": 35,
+   "meaning": "Browser-only local Skills draft editor; no private source data is published."
+  },
+  {
+   "id": "tab.tracker",
+   "label": "Tracker",
+   "root": "tracker",
+   "order": 40,
+   "meaning": "Listings that left the new pool."
+  },
+  {
+   "id": "tab.system",
+   "label": "System",
+   "root": "system",
+   "order": 50,
+   "meaning": "Keys, refresh, and the terminal fallback."
+  }
+ ]
+}
